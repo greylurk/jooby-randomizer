@@ -1,0 +1,14 @@
+pluginManagement {
+  resolutionStrategy {
+    eachPlugin {
+      if (requested.id.namespace == 'jooby') {
+        useModule('org.jooby:jooby-gradle-plugin:1.4.0')
+      }
+    }
+  }
+  repositories {
+    gradlePluginPortal()
+    mavenLocal()
+    mavenCentral()
+  }
+}
