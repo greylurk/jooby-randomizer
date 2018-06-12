@@ -1,6 +1,10 @@
 package com.greylurk.randomizer.services;
 
+import static org.hamcrest.Matchers.allOf;
+import static org.hamcrest.Matchers.endsWith;
+import static org.hamcrest.Matchers.greaterThanOrEqualTo;
 import static org.hamcrest.Matchers.isIn;
+import static org.hamcrest.Matchers.lessThanOrEqualTo;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertThat;
 
@@ -53,5 +57,23 @@ public class TestRandomTable {
     public void testSimpleString() throws Exception {
         RandomTable table = new RandomTable(buildSampleData());
         assertEquals(table.expandValue("dnd"), "Dungeons and Dragons");
+    }
+
+    @Test
+    public void testEvalDice() throws Exception {
+        RandomTable table = new RandomTable(buildSampleData());
+        String result = table.expandValue("goblins");
+        assertThat(result, endsWith("goblins"));
+        String[] parts = result.split("\\s");
+        assertThat(Integer.parseInt(parts[0]), allOf(greaterThanOrEqualTo(1), lessThanOrEqualTo(10)));
+    }
+    @Test
+
+    public void testEvalAddition() throws Exception {
+        RandomTable table = new RandomTable(buildSampleData());
+        String result = table.expandValue("gerblins");
+        assertThat(result, endsWith("gerblins"));
+        String[] parts = result.split("\\s");
+        assertThat(Integer.parseInt(parts[0]), allOf(greaterThanOrEqualTo(6), lessThanOrEqualTo(25)));
     }
 }

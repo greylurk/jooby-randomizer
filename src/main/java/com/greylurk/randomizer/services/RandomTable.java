@@ -6,6 +6,7 @@ import java.util.Map;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.IntStream;
 
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
@@ -14,6 +15,9 @@ import org.slf4j.LoggerFactory;
 
 public class RandomTable {
     private static final Logger logger = LoggerFactory.getLogger(RandomTable.class);
+    private static final Pattern dicePattern = Pattern.compile("(\\d+)d(\\d+)");
+    private static final Pattern moustachePattern = Pattern.compile("\\{([^\\}]+)\\}");
+	private static final Pattern additionPattern = Pattern.compile("(\\d+)\\s*\\+\\s*(\\d+)");
     Map<String, Object> values;
 
     public RandomTable(Map<String, Object> values) {
@@ -59,10 +63,16 @@ public class RandomTable {
         return eval(weightedList);
 	}
 
+    private String eval(final String value) {
+        return evalMoustache(evalAddition(evalDice(value)));
+    }
 
-	private String eval(final String value) {
-        Pattern pattern = Pattern.compile("\\{([^\\}]+)\\}");
-        Matcher matcher = pattern.matcher(value);
+    /**
+     * Evaluate moustache expressions inside a string by checking the other keys in the
+     * table and expanding them.
+     */
+	private String evalMoustache(final String value) {
+        Matcher matcher = moustachePattern.matcher(value);
         if( matcher.groupCount() == 0 ) {
             return value;
         }
@@ -72,23 +82,40 @@ public class RandomTable {
             matcher.appendReplacement(buffer, expandValue(matcher.group(1)));
         }
         matcher.appendTail(buffer);
-		return buffer.toString();
+		return evalDice(buffer.toString());
     }
 
+    /**
+     * Evaluate dice expressions in a string by generating random numbers.
+     */
     private String evalDice(final String value ) {
-        Pattern pattern = Pattern.compile("(\\d+)d(\\d+)([+x]\\d+)+");
-        Matcher matcher = pattern.matcher(value);
+        Matcher matcher = dicePattern.matcher(value);
         if( matcher.groupCount() == 0 ) {
             return value;
         }
         matcher.reset();
         StringBuffer buffer = new StringBuffer();
         while(matcher.find()) {
-            matcher.appendReplacement(buffer, () -> {
-                int count = Integer.parseInt(matcher.group(1));
-                int die = Integer.paresInt(matcher.group(2));
-                return "";
-            }());
+            int count = Integer.parseInt(matcher.group(1));
+            int die = Integer.parseInt(matcher.group(2));
+            int result = IntStream.range(0,count)
+                .map((i) -> ThreadLocalRandom.current().nextInt(die))
+                .reduce(0, Integer::sum);
+            matcher.appendReplacement(buffer, Integer.toString(result));
+        }
+        matcher.appendTail(buffer);
+        return buffer.toString();
+    }
+
+    private String evalAddition(final String value ) {
+        Matcher matcher = additionPattern.matcher(value);
+        if( matcher.groupCount() == 0 ) {
+            return value;
+        }
+        StringBuffer buffer = new StringBuffer();
+        while(matcher.find()) {
+            int sum = Integer.sum(Integer.parseInt(matcher.group(1)),Integer.parseInt(matcher.group(2)));
+            matcher.appendReplacement(buffer, Integer.toString(sum));
         }
         matcher.appendTail(buffer);
         return buffer.toString();

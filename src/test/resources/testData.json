@@ -18,5 +18,7 @@
         "4": "Mind Flayer",
         "5-6": "Drow Soldier",
         "7-10": "Ruffian"
-    }
+    },
+    "goblins": "1d10 goblins",
+    "gerblins": "1d20+5 gerblins"
 }
